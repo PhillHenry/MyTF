@@ -8,6 +8,9 @@ class RandomBitmap:
         self.n = n
         self.m = m
 
+    def add_line(self, npts):
+        pass
+
     def add_random_points(self, npts):
         if npts > (self.n * self.m):
             raise Exception('n = {}, m = {}, npts = {}'.format(self.n, self.m, npts))
