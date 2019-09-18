@@ -13,12 +13,16 @@ class RandomBitmap:
             raise Exception('n = {}, m = {}, npts = {}'.format(self.n, self.m, npts))
         xs = np.random.randint(0, self.m, npts)
         ys = np.random.randint(0, self.n, npts)
-        coords = np.vstack([xs,ys]).T # https://stackoverflow.com/questions/26193386/numpy-zip-function
-        pts = set()
+        coords = np.vstack([xs,ys]).T  # https://stackoverflow.com/questions/26193386/numpy-zip-function
         for (x, y) in coords:
             self.matrix[x][y] = 1
-            pts.add((x, y))
-        if len(pts) < npts:
-            self.add_random_points(npts - len(pts))
+        total = self.num_points()
+        if total < npts:
+            self.add_random_points(npts - total)
         return self.matrix
 
+    def num_points(self):
+        total = 0
+        for row in self.matrix:
+            total += len(list(filter(lambda x: x == 1, row)))
+        return total
