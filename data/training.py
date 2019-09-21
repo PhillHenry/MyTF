@@ -1,8 +1,10 @@
 from data import bitmaps
 from random import shuffle
+import logging
 
 
 def create_data(n_samples, width, height, class_ratio, n_pts, pts_ratio):
+    logging.info('Creating {} samples of size {} x {}'.format(n_samples, width, height))
     bitmap_to_class = []
     n_pos = int(class_ratio * n_samples)
     n_neg = n_samples - n_pos
