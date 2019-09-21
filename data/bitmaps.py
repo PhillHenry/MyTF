@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class RandomBitmap:
@@ -8,8 +9,14 @@ class RandomBitmap:
         self.n = n
         self.m = m
 
-    def add_line(self, npts):
-        pass
+    def add_line(self, n_pts):
+        if n_pts > self.n or n_pts > self.m:
+            raise Exception('A straight line of size {} will not fit into a matrix of {} x {}'
+                            .format(n_pts, self.n, self.m))
+        rand_x = random.randint(0, self.n - 1)
+        for y in range(n_pts):
+            self.matrix[y][rand_x] = 1
+        return self.matrix
 
     def add_random_points(self, npts):
         if npts > (self.n * self.m):
