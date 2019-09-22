@@ -1,5 +1,6 @@
 import tensorflow as tf
 import logging
+import numpy as np
 
 
 class ImageClassifier():
@@ -51,12 +52,22 @@ class ImageClassifier():
         out = tf.add(tf.matmul(local_out, W_out), b_out)
         return out
 
+    def one_hot_encode(self, b_2_r, n_cats):
+        xs = map(lambda b2r: b2r[1], self.train_b_2_r)
+        labels = np.asarray(list(xs))
+        onehot_labels = tf.one_hot(labels, n_cats, on_value=1., off_value=0., axis=-1)
+        return onehot_labels
+
+    def as_numpy_array(self, b_2_r):
+        xs = map(lambda b2r: b2r[0].matrix, self.train_b_2_r)
+        return np.asarray(list(xs))
+
     def train(self, n_training_epochs):  # from "Machine Learning with Tensorflow", chapter 9
         n_cats = 2
         x = tf.placeholder(dtype=tf.float32, shape=[None, self.width * self.height], name="x")
         y = tf.placeholder(tf.float32, [None, n_cats])
-        labels = map(lambda b2r: b2r[1], self.train_b_2_r)
-        data = self.train_b_2_r
+
+        data = self.as_numpy_array(self.train_b_2_r)
 
         model_op = self.model(x)
         cost = tf.reduce_mean(
@@ -70,17 +81,35 @@ class ImageClassifier():
 
         with tf.compat.v1.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            onehot_labels = tf.one_hot(labels, n_cats, on_value=1., off_value=0., axis=-1)
+            onehot_labels = self.one_hot_encode(self.train_b_2_r, n_cats)
             onehot_vals = sess.run(onehot_labels)
             batch_size = len(data) // 200
             print('batch size', batch_size)
             for j in range(0, n_training_epochs):
                 print('EPOCH', j)
                 for i in range(0, len(data), batch_size):
-                    batch_data = data[i:i+batch_size, :]
-                    batch_onehot_vals = onehot_vals[i:i+batch_size, :]
+                    batch_data = data[i:i+batch_size]
+                    batch_onehot_vals = onehot_vals[i:i+batch_size]
                     _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: batch_data, y:
                         batch_onehot_vals})
                     if i % 1000 == 0:
                         print(i, accuracy_val)
                     print('DONE WITH EPOCH')
+
+
+if __name__ == "__main__":
+    from data import training
+    from tf import anns
+    n_samples = 100
+
+    i = 42
+    j = 101
+
+    n_pts = int((i * j) / 20)
+    class_ratio = int(n_samples / 20)
+
+    test_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
+    training_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
+
+    classifier = anns.ImageClassifier(training_data, test_data)
+    classifier.train(100)
