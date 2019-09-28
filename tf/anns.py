@@ -62,12 +62,26 @@ class ImageClassifier():
         xs = map(lambda b2r: b2r[0].matrix, self.train_b_2_r)
         return np.asarray(list(xs))
 
+    def flatten(self, xs):
+        xs_reshaped = map(lambda x: np.reshape(x, self.width * self.height), xs)
+        return np.asarray(list(xs_reshaped))
+
+    def stack_data(self, raw_data):
+        data = []
+        for i in range(len(raw_data)):
+            batch_data = self.flatten(raw_data[i])
+            if len(data) > 0:
+                data = np.vstack((data, batch_data))
+            else:
+                data = batch_data
+        return data
+
     def train(self, n_training_epochs):  # from "Machine Learning with Tensorflow", chapter 9
         n_cats = 2
         x = tf.placeholder(dtype=tf.float32, shape=[None, self.width * self.height], name="x")
         y = tf.placeholder(tf.float32, [None, n_cats])
 
-        data = self.as_numpy_array(self.train_b_2_r)
+        data = self.stack_data(self.as_numpy_array(self.train_b_2_r))
 
         model_op = self.model(x)
         cost = tf.reduce_mean(
