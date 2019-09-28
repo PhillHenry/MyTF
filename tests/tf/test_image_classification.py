@@ -3,6 +3,7 @@ from tests.tf import image_factory
 
 factory = image_factory.ImageClassifierFactory()
 
+
 def test_one_hot_encoding():
     encoded = factory.create_image_classifier().one_hot_encode(factory.training_data, 2)
     assert factory.n_samples == np.shape(encoded)[0]
