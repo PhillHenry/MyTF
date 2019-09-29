@@ -1,12 +1,14 @@
 import numpy as np
 from tests.tf import image_factory
+import tensorflow as tf
 
 factory = image_factory.ImageClassifierFactory()
 
 
 def test_one_hot_encoding():
     encoded = factory.create_image_classifier().one_hot_encode(factory.training_data, 2)
-    assert factory.n_samples == np.shape(encoded)[0]
+    shape = tf.shape(encoded)
+    assert factory.n_samples == shape
 
 
 def test_bitmaps_as_numpy_arrays():

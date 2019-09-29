@@ -55,8 +55,7 @@ class ImageClassifier():
     def one_hot_encode(self, b_2_r, n_cats):
         xs = map(lambda b2r: b2r[1], b_2_r)
         labels = np.asarray(list(xs))
-        onehot_labels = tf.one_hot(labels, n_cats, on_value=1., off_value=0., axis=-1)
-        return onehot_labels
+        return tf.one_hot(labels, n_cats, on_value=1., off_value=0., axis=-1)
 
     def as_numpy_array(self, b_2_r):
         xs = map(lambda b2r: b2r[0].matrix, b_2_r)
@@ -66,8 +65,15 @@ class ImageClassifier():
         xs_reshaped = map(lambda x: np.reshape(x, self.width * self.height), xs)
         return np.asarray(list(xs_reshaped))
 
+    def matrix_2d_to_1d(self, m):
+        shape = np.shape(m)
+        return np.reshape(m, shape[0] * shape[1])
+
     def stack_data(self, matrices):
-        return np.reshape(matrices.shape[0], matrices.shape[1] * matrices.shape[2])
+        flattened = []
+        for matrix in matrices:
+            flattened.append(self.matrix_2d_to_1d(matrix))
+        return np.asarray(flattened)
 
     def structure_data(self):
         samples_width_height = self.as_numpy_array(self.train_b_2_r)
