@@ -7,8 +7,7 @@ factory = image_factory.ImageClassifierFactory()
 
 def test_one_hot_encoding():
     encoded = factory.create_image_classifier().one_hot_encode(factory.training_data, 2)
-    shape = tf.shape(encoded)
-    assert factory.n_samples == shape
+    assert factory.n_samples == encoded.get_shape().as_list()[0]
 
 
 def test_bitmaps_as_numpy_arrays():
