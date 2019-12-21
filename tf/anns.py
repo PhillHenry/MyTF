@@ -13,7 +13,7 @@ class ImageClassifier():
         self.height = b.m
 
     def conv_layer(self, x, W, b):
-        conv = tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+        conv = tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='SAME')
         conv_with_b = tf.nn.bias_add(conv, b)
         conv_out = tf.nn.relu(conv_with_b)
         return conv_out
@@ -36,7 +36,7 @@ class ImageClassifier():
 
         # Introduces a fully
         # connected layer
-        W3 = tf.Variable(tf.random_normal([6*6*64, 1024]))
+        W3 = tf.Variable(tf.random_normal([5*21*64, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
         # Defines the variables
@@ -46,6 +46,7 @@ class ImageClassifier():
         b_out = tf.Variable(tf.random_normal([n_cats]))
 
         x_reshaped = tf.reshape(x, shape=[-1, self.width, self.height, 1])
+        print('x_reshaped = {}'.format(np.shape(x_reshaped)))
 
         conv_out1 = self.conv_layer(x_reshaped, W1, b1)
         maxpool_out1 = self.maxpool_layer(conv_out1)
@@ -59,6 +60,9 @@ class ImageClassifier():
         local = tf.add(tf.matmul(maxpool_reshaped, W3), b3)
         local_out = tf.nn.relu(local)
         out = tf.add(tf.matmul(local_out, W_out), b_out)
+
+        print('out = {}'.format(np.shape(out)))
+
         return out
 
     def one_hot_encode(self, b_2_r, n_cats):
@@ -96,6 +100,7 @@ class ImageClassifier():
         data = self.structure_data()
 
         model_op = self.model(x)
+        print('model_op = {}'.format(np.shape(model_op)))
         cost = tf.reduce_mean(
             tf.nn.softmax_cross_entropy_with_logits(logits=model_op, labels=y)
         )
@@ -109,13 +114,14 @@ class ImageClassifier():
             sess.run(tf.global_variables_initializer())
             onehot_labels = self.one_hot_encode(self.train_b_2_r, n_cats)
             onehot_vals = sess.run(onehot_labels)
-            batch_size = len(data) // 200
+            batch_size = len(data) // 100
             print('batch size', batch_size)
             for j in range(0, n_training_epochs):
                 print('EPOCH', j)
                 for i in range(0, len(data), batch_size):
                     batch_data = data[i:i+batch_size]
                     batch_onehot_vals = onehot_vals[i:i+batch_size]
+                    print('x shape {}, y shape{}'.format(np.shape(batch_data), np.shape(batch_onehot_vals)))
                     _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: batch_data, y:
                         batch_onehot_vals})
                     if i % 1000 == 0:
