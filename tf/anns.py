@@ -24,19 +24,28 @@ class ImageClassifier():
     def model(self, x):
         n_cats = 2
 
+        # Applies 64 convolutions
+        # of window size 5 × 5
         W1 = tf.Variable(tf.random_normal([5, 5, 1, 64]))
         b1 = tf.Variable(tf.random_normal([64]))
 
+        # Applies 64 more convolutions
+        # of window size 5 × 5
         W2 = tf.Variable(tf.random_normal([5, 5, 64, 64]))
         b2 = tf.Variable(tf.random_normal([64]))
 
+        # Introduces a fully
+        # connected layer
         W3 = tf.Variable(tf.random_normal([6*6*64, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
+        # Defines the variables
+        # for a fully connected
+        # linear layer
         W_out = tf.Variable(tf.random_normal([1024, n_cats]))
         b_out = tf.Variable(tf.random_normal([n_cats]))
 
-        x_reshaped = tf.reshape(x, shape=[-1, 24, 24, 1])
+        x_reshaped = tf.reshape(x, shape=[-1, self.width, self.height, 1])
 
         conv_out1 = self.conv_layer(x_reshaped, W1, b1)
         maxpool_out1 = self.maxpool_layer(conv_out1)
@@ -119,8 +128,8 @@ if __name__ == "__main__":
     from tf import anns
     n_samples = 100
 
-    i = 42
-    j = 101
+    i = 40
+    j = 100
 
     n_pts = int((i * j) / 20)
     class_ratio = int(n_samples / 20)

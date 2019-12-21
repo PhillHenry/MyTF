@@ -1,6 +1,6 @@
 import numpy as np
+
 from tests.tf import image_factory
-import tensorflow as tf
 
 factory = image_factory.ImageClassifierFactory()
 
