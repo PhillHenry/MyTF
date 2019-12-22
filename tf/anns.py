@@ -114,15 +114,14 @@ class ImageClassifier:
             sess.run(tf.global_variables_initializer())
             onehot_labels = self.one_hot_encode(self.train_b_2_r, n_cats)
             onehot_vals = sess.run(onehot_labels)
-            batch_size = len(data) // 10
+            batch_size = len(data) // 50
             print('batch size', batch_size)
             for j in range(0, n_training_epochs):
                 print('EPOCH', j)
                 for i in range(0, len(data), batch_size):
                     batch_data = data[i:i+batch_size]
                     batch_onehot_vals = onehot_vals[i:i+batch_size]
-                    _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: batch_data, y:
-                        batch_onehot_vals})
+                    _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: batch_data, y: batch_onehot_vals})
                     if j % 10 == 0 and i == batch_size:
                         print('epoch = {}, accuracy = {}'.format(j, accuracy_val))
 
@@ -130,7 +129,7 @@ class ImageClassifier:
 if __name__ == "__main__":
     from tf.sample_data import Sample
 
-    samples = Sample(40, 100, 20)
+    samples = Sample(40, 100, 100)
 
     classifier = ImageClassifier(samples.training_data, samples.test_data)
     classifier.train(11)
