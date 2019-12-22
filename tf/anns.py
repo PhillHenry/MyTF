@@ -119,8 +119,23 @@ class ImageClassifier:
                     batch_data = data[i:i+batch_size]
                     batch_onehot_vals = onehot_vals[i:i+batch_size]
                     _, accuracy_val = sess.run([self.train_op, self.accuracy], feed_dict={self.x: batch_data, self.y: batch_onehot_vals})
-                    if j % 10 == 0 and i == batch_size:
-                        print('epoch = {}, accuracy = {}'.format(j, accuracy_val))
+                    # if j % 10 == 0 and i == batch_size:
+                    print('epoch = {}, accuracy = {}'.format(j, accuracy_val))
+
+    def test(self):
+        data = self.structure_data(self.test_b_2_r)
+
+        with tf.compat.v1.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            onehot_labels = self.one_hot_encode(self.test_b_2_r, self.n_cats)
+            onehot_vals = sess.run(onehot_labels)
+            print('data = {}'.format(np.shape(data)))
+            print('labels = {}'.format(np.shape(onehot_vals)))
+            _, c, p = sess.run([self.train_op, self.cost, self.model_op], feed_dict={self.x: data,
+                                                                   self.y: onehot_vals})
+            correct_prediction = tf.equal(tf.argmax(self.model_op), tf.argmax(self.y))
+            accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+            print ("Accuracy:", accuracy.eval({self.x: data,self.y: onehot_vals}))
 
 
 if __name__ == "__main__":
@@ -130,6 +145,7 @@ if __name__ == "__main__":
 
     classifier = ImageClassifier(samples.training_data, samples.test_data)
     classifier.train(11)
+    classifier.test()
 
     # with tf.compat.v1.Session() as sess:
     #     _, c, p = sess.run([optimizer, cost, pred], feed_dict={x: X_new ,
