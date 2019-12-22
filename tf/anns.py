@@ -11,6 +11,17 @@ class ImageClassifier:
         (b, r) = train_b_2_r[0]
         self.width = b.n
         self.height = b.m
+        self.n_cats = 2
+        self.x = tf.placeholder(dtype=tf.float32, shape=[None, self.width * self.height], name="x")
+        self.y = tf.placeholder(tf.float32, [None, self.n_cats])
+        self.model_op = self.model(self.x)
+        print('model_op = {}'.format(np.shape(self.model_op)))
+        self.cost = tf.reduce_mean(
+            tf.nn.softmax_cross_entropy_with_logits(logits=self.model_op, labels=self.y)
+        )
+        self.train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.cost)
+        self.correct_pred = tf.equal(tf.argmax(self.model_op, 1), tf.argmax(self.y, 1))
+        self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
 
     def conv_layer(self, x, W, b):
         conv = tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='SAME')
@@ -88,31 +99,17 @@ class ImageClassifier:
             flattened.append(self.matrix_2d_to_1d(matrix))
         return np.asarray(flattened)
 
-    def structure_data(self):
-        samples_width_height = self.as_numpy_array(self.train_b_2_r)
+    def structure_data(self, b_2_r):
+        samples_width_height = self.as_numpy_array(b_2_r)
         return self.stack_data(samples_width_height)
 
     def train(self, n_training_epochs):  # from "Machine Learning with Tensorflow", chapter 9
-        n_cats = 2
-        x = tf.placeholder(dtype=tf.float32, shape=[None, self.width * self.height], name="x")
-        y = tf.placeholder(tf.float32, [None, n_cats])
-
-        data = self.structure_data()
-
-        model_op = self.model(x)
-        print('model_op = {}'.format(np.shape(model_op)))
-        cost = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(logits=model_op, labels=y)
-        )
-        train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(cost)
-        correct_pred = tf.equal(tf.argmax(model_op, 1), tf.argmax(y, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-
+        data = self.structure_data(self.train_b_2_r)
         logging.info('About to start training with {} epochs'.format(n_training_epochs))
 
         with tf.compat.v1.Session() as sess:
             sess.run(tf.global_variables_initializer())
-            onehot_labels = self.one_hot_encode(self.train_b_2_r, n_cats)
+            onehot_labels = self.one_hot_encode(self.train_b_2_r, self.n_cats)
             onehot_vals = sess.run(onehot_labels)
             batch_size = len(data) // 50
             print('batch size', batch_size)
@@ -121,7 +118,7 @@ class ImageClassifier:
                 for i in range(0, len(data), batch_size):
                     batch_data = data[i:i+batch_size]
                     batch_onehot_vals = onehot_vals[i:i+batch_size]
-                    _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: batch_data, y: batch_onehot_vals})
+                    _, accuracy_val = sess.run([self.train_op, self.accuracy], feed_dict={self.x: batch_data, self.y: batch_onehot_vals})
                     if j % 10 == 0 and i == batch_size:
                         print('epoch = {}, accuracy = {}'.format(j, accuracy_val))
 
@@ -133,3 +130,10 @@ if __name__ == "__main__":
 
     classifier = ImageClassifier(samples.training_data, samples.test_data)
     classifier.train(11)
+
+    # with tf.compat.v1.Session() as sess:
+    #     _, c, p = sess.run([optimizer, cost, pred], feed_dict={x: X_new ,
+    #                                                            y: Y_new})
+    #     correct_prediction = tf.equal(tf.argmax(pred), tf.argmax(Y))
+    #     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+    #     print ("Accuracy:", accuracy.eval({X: X_test, Y: Y_test}))

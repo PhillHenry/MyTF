@@ -17,5 +17,6 @@ def test_as_numpy_array():
 
 
 def test_stack_data():
-    xs = factory.create_image_classifier().structure_data()
+    classifier = factory.create_image_classifier()
+    xs = classifier.structure_data(classifier.train_b_2_r)
     assert np.shape(xs) == (factory.n_samples, factory.i * factory.j)
