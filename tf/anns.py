@@ -136,9 +136,6 @@ class ImageClassifier:
             for i in range(0, len(data), batch_size):
                 batch_data = data[i:i+batch_size]
                 batch_onehot_vals = onehot_vals[i:i+batch_size]
-
-                _, c, p = sess.run([self.train_op, self.cost, self.model_op], feed_dict={self.x: batch_data,
-                                                                                         self.y: batch_onehot_vals})
                 correct_prediction = tf.equal(tf.argmax(self.model_op), tf.argmax(self.y))
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
                 accuracy_eval = accuracy.eval({self.x: batch_data, self.y: batch_onehot_vals})
