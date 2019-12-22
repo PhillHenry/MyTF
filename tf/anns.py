@@ -3,7 +3,7 @@ import logging
 import numpy as np
 
 
-class ImageClassifier():
+class ImageClassifier:
 
     def __init__(self, train_b_2_r, test_b_2_r):
         self.train_b_2_r = train_b_2_r
@@ -36,7 +36,7 @@ class ImageClassifier():
 
         # Introduces a fully
         # connected layer
-        W3 = tf.Variable(tf.random_normal([5*21*64, 1024]))
+        W3 = tf.Variable(tf.random_normal([6*7*64, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
         # Defines the variables
@@ -114,25 +114,22 @@ class ImageClassifier():
             sess.run(tf.global_variables_initializer())
             onehot_labels = self.one_hot_encode(self.train_b_2_r, n_cats)
             onehot_vals = sess.run(onehot_labels)
-            batch_size = len(data) // 100
+            batch_size = len(data) // 10
             print('batch size', batch_size)
             for j in range(0, n_training_epochs):
                 print('EPOCH', j)
                 for i in range(0, len(data), batch_size):
                     batch_data = data[i:i+batch_size]
                     batch_onehot_vals = onehot_vals[i:i+batch_size]
-                    print('x shape {}, y shape{}'.format(np.shape(batch_data), np.shape(batch_onehot_vals)))
                     _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: batch_data, y:
                         batch_onehot_vals})
-                    if i % 1000 == 0:
-                        print(i, accuracy_val)
-                    print('DONE WITH EPOCH')
+                    if j % 10 == 0 and i == batch_size:
+                        print('epoch = {}, accuracy = {}'.format(j, accuracy_val))
 
 
 if __name__ == "__main__":
     from data import training
-    from tf import anns
-    n_samples = 100
+    n_samples = 20
 
     i = 40
     j = 100
@@ -143,5 +140,5 @@ if __name__ == "__main__":
     test_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
     training_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
 
-    classifier = anns.ImageClassifier(training_data, test_data)
-    classifier.train(100)
+    classifier = ImageClassifier(training_data, test_data)
+    classifier.train(11)
