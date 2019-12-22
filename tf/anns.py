@@ -128,17 +128,9 @@ class ImageClassifier:
 
 
 if __name__ == "__main__":
-    from data import training
-    n_samples = 20
+    from tf.sample_data import Sample
 
-    i = 40
-    j = 100
+    samples = Sample(40, 100, 20)
 
-    n_pts = int((i * j) / 20)
-    class_ratio = int(n_samples / 20)
-
-    test_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
-    training_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
-
-    classifier = ImageClassifier(training_data, test_data)
+    classifier = ImageClassifier(samples.training_data, samples.test_data)
     classifier.train(11)
