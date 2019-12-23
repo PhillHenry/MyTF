@@ -22,6 +22,7 @@ class ImageClassifier:
         self.train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.cost)
         self.correct_pred = tf.equal(tf.argmax(self.model_op, 1), tf.argmax(self.y, 1))
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
+        self.batch_size = len(self.train_b_2_r) // 50
 
     def conv_layer(self, x, W, b):
         conv = tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='SAME')
@@ -106,15 +107,14 @@ class ImageClassifier:
             sess.run(tf.global_variables_initializer())
             onehot_labels = self.one_hot_encode(self.train_b_2_r, self.n_cats)
             onehot_vals = sess.run(onehot_labels)
-            batch_size = len(data) // 50
-            print('batch size', batch_size)
+            print('batch size', self.batch_size)
             for j in range(0, n_training_epochs):
                 print('EPOCH', j)
-                for i in range(0, len(data), batch_size):
-                    batch_data = data[i:i+batch_size]
-                    batch_onehot_vals = onehot_vals[i:i+batch_size]
+                for i in range(0, len(data), self.batch_size):
+                    batch_data = data[i:i+self.batch_size]
+                    batch_onehot_vals = onehot_vals[i:i+self.batch_size]
                     _, accuracy_val = sess.run([self.train_op, self.accuracy], feed_dict={self.x: batch_data, self.y: batch_onehot_vals})
-                    if j % 10 == 0 and i == batch_size:
+                    if j % 10 == 0 and i == self.batch_size:
                         print('epoch = {}, accuracy = {}'.format(j, accuracy_val))
 
     def test(self):
@@ -127,10 +127,9 @@ class ImageClassifier:
             onehot_vals = sess.run(onehot_labels)
             print('data = {}'.format(np.shape(data)))
             print('labels = {}'.format(np.shape(onehot_vals)))
-            batch_size = self.n_cats
-            for i in range(0, len(data), batch_size):
-                batch_data = data[i:i+batch_size]
-                batch_onehot_vals = onehot_vals[i:i+batch_size]
+            for i in range(0, len(data), self.batch_size):
+                batch_data = data[i:i+self.batch_size]
+                batch_onehot_vals = onehot_vals[i:i+self.batch_size]
                 correct_prediction = tf.equal(tf.argmax(self.model_op), tf.argmax(self.y))
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
                 accuracy_eval = accuracy.eval({self.x: batch_data, self.y: batch_onehot_vals})
