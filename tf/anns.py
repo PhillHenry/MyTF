@@ -35,24 +35,19 @@ class ImageClassifier:
     def model(self, x):
         n_cats = 2
 
-        # Applies 64 convolutions
-        # of window size 5 × 5
+        # Applies 64 convolutions of window size 5 × 5
         W1 = tf.Variable(tf.random_normal([5, 5, 1, 64]))
         b1 = tf.Variable(tf.random_normal([64]))
 
-        # Applies 64 more convolutions
-        # of window size 5 × 5
+        # Applies 64 more convolutions of window size 5 × 5
         W2 = tf.Variable(tf.random_normal([5, 5, 64, 64]))
         b2 = tf.Variable(tf.random_normal([64]))
 
-        # Introduces a fully
-        # connected layer
+        # Introduces a fully connected layer
         W3 = tf.Variable(tf.random_normal([6*7*64, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
-        # Defines the variables
-        # for a fully connected
-        # linear layer
+        # Defines the variables for a fully connected linear layer
         W_out = tf.Variable(tf.random_normal([1024, n_cats]))
         b_out = tf.Variable(tf.random_normal([n_cats]))
 
