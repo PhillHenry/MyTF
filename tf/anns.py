@@ -1,6 +1,7 @@
 import tensorflow as tf
 import logging
 import numpy as np
+import math
 
 
 class ImageClassifier:
@@ -60,7 +61,7 @@ class ImageClassifier:
         #          2 |    1, 1 |  16000 |   -    |      -      |     -         SUCCESS
 
         # Introduces a fully connected layer
-        dim = window_size * window_size * (self.width // window_size) * (self.height // window_size) * self.batch_size
+        dim = window_size * window_size * math.ceil(self.width / window_size) * math.ceil(self.height / window_size) * self.batch_size
         W3 = tf.Variable(tf.random_normal([dim, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
@@ -156,7 +157,7 @@ class ImageClassifier:
 if __name__ == "__main__":
     from tf.sample_data import Sample
 
-    samples = Sample(40, 100, 100)
+    samples = Sample(39, 99, 100)
 
     classifier = ImageClassifier(samples.training_data, samples.test_data)
     classifier.train(11)
