@@ -14,6 +14,7 @@ class ImageClassifier:
         self.n_cats = 2
         self.x = tf.placeholder(dtype=tf.float32, shape=[None, self.width * self.height], name="x")
         self.y = tf.placeholder(tf.float32, [None, self.n_cats])
+        self.batch_size = len(self.train_b_2_r) // 25
         self.model_op = self.model(self.x)
         print('model_op = {}'.format(np.shape(self.model_op)))
         self.cost = tf.reduce_mean(
@@ -22,10 +23,9 @@ class ImageClassifier:
         self.train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(self.cost)
         self.correct_pred = tf.equal(tf.argmax(self.model_op, 1), tf.argmax(self.y, 1))
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
-        self.batch_size = len(self.train_b_2_r) // 50
 
     def conv_layer(self, x, W, b):
-        conv = tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='SAME')
+        conv = tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
         conv_with_b = tf.nn.bias_add(conv, b)
         conv_out = tf.nn.relu(conv_with_b)
         return conv_out
@@ -35,17 +35,33 @@ class ImageClassifier:
 
     def model(self, x):
         n_cats = 2
+        window_size = 5
 
         # Applies 64 convolutions of window size 5 × 5
-        W1 = tf.Variable(tf.random_normal([5, 5, 1, 64]))
+        W1 = tf.Variable(tf.random_normal([window_size, window_size, 1, 64]))
         b1 = tf.Variable(tf.random_normal([64]))
 
         # Applies 64 more convolutions of window size 5 × 5
-        W2 = tf.Variable(tf.random_normal([5, 5, 64, 64]))
+        W2 = tf.Variable(tf.random_normal([window_size, window_size, 64, 64]))
         b2 = tf.Variable(tf.random_normal([64]))
 
+        # batch_size | strides | W3     | actual | logits_size | labels_size
+        #          2 |    1, 1 | 6*6*64 | 32000  |      -      |     -
+        #          2 |    2, 2 | 6*6*64 |  2688  |      -      |     -
+        #          4 |    1, 1 | 6*6*64 | 64000  |      -      |     -
+        #          4 |    2, 2 |  16000 |  5376  |      -      |     -
+        #          4 |    3, 3 |  16000 |  1536  |      -      |     -
+        #          4 |    4, 4 |  16000 |   512  |      -      |     -
+        #          4 |    5, 5 |  16000 |   256  |      -      |     -
+        #          4 |    6, 6 |  16000 |   256  |      -      |     -
+        #          4 |    7, 7 |  16000 |   256  |      -      |     -
+        #          4 |    1, 1 |   1000 |   -    |     [64,2]  |   [4,2]
+        #          4 |    1, 1 |  16000 |   -    |      -      |     -         SUCCESS
+        #          2 |    1, 1 |  16000 |   -    |      -      |     -         SUCCESS
+
         # Introduces a fully connected layer
-        W3 = tf.Variable(tf.random_normal([6*7*64, 1024]))
+        dim = window_size * window_size * (self.width // window_size) * (self.height // window_size) * self.batch_size
+        W3 = tf.Variable(tf.random_normal([dim, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
         # Defines the variables for a fully connected linear layer
@@ -53,7 +69,6 @@ class ImageClassifier:
         b_out = tf.Variable(tf.random_normal([n_cats]))
 
         x_reshaped = tf.reshape(x, shape=[-1, self.width, self.height, 1])
-        print('x_reshaped = {}'.format(np.shape(x_reshaped)))
 
         conv_out1 = self.conv_layer(x_reshaped, W1, b1)
         maxpool_out1 = self.maxpool_layer(conv_out1)
