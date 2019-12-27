@@ -24,17 +24,22 @@ if __name__ == '__main__':
     samples = Sample(40, 100, 100)
     fig = plt.figure(0)
 
-    nOfEach = 4
+    nOfEach = 3
     n_rows = 2
 
     positive_matrices = Sample.matrices_of(samples.training_data, 1)
     for i in range(nOfEach):
-        fig.add_subplot(n_rows, nOfEach, i + 1)
+        ax = fig.add_subplot(n_rows, nOfEach, i + 1)
+        ax.set_yticklabels([])  # https://stackoverflow.com/questions/37039685/hide-axis-values-in-matplotlib
+        ax.set_xticklabels([])
         plt.imshow(positive_matrices[i])
 
     negative_matrices = Sample.matrices_of(samples.training_data, 0)
     for i in range(nOfEach):
-        fig.add_subplot(n_rows, nOfEach, i + 1 + nOfEach)
+        ax = fig.add_subplot(n_rows, nOfEach, i + 1 + nOfEach)
+        ax.set_yticklabels([])
+        ax.set_xticklabels([])
         plt.imshow(negative_matrices[i])
 
+    plt.title("Simulated network connections (machines vs ports)")
     plt.show()
