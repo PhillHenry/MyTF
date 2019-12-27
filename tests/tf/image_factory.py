@@ -7,6 +7,8 @@ class ImageClassifierFactory:
 
     i = 42
     j = 101
+    stride = 2
+    ksize = 2
 
     n_pts = int((i * j) / 20)
     class_ratio = int(n_samples / 20)
@@ -15,6 +17,6 @@ class ImageClassifierFactory:
     training_data = training.create_data(n_samples, j, i, class_ratio, n_pts, n_pts * 0.0001)
 
     def create_image_classifier(self):
-        classifier = anns.ImageClassifier(self.training_data, self.test_data)
+        classifier = anns.ImageClassifier(self.training_data, self.test_data, self.stride, self.ksize)
         return classifier
 

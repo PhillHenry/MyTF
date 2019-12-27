@@ -6,16 +6,18 @@ import math
 
 class ImageClassifier:
 
-    def __init__(self, train_b_2_r, test_b_2_r):
+    def __init__(self, train_b_2_r, test_b_2_r, stride=2, ksize=2):
         self.train_b_2_r = train_b_2_r
         self.test_b_2_r = test_b_2_r
         (b, r) = train_b_2_r[0]
         self.width = b.n
         self.height = b.m
         self.n_cats = 2
+        self.ksize = ksize
         self.x = tf.placeholder(dtype=tf.float32, shape=[None, self.width * self.height], name="x")
         self.y = tf.placeholder(tf.float32, [None, self.n_cats])
         self.batch_size = len(self.train_b_2_r) // 25
+        self.stride_size = stride
         self.model_op = self.model(self.x)
         print('model_op = {}'.format(np.shape(self.model_op)))
         self.cost = tf.reduce_mean(
@@ -26,13 +28,23 @@ class ImageClassifier:
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_pred, tf.float32))
 
     def conv_layer(self, x, W, b):
-        conv = tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')
+        conv = tf.nn.conv2d(x, W, strides=[1, self.stride_size, self.stride_size, 1], padding='SAME')
         conv_with_b = tf.nn.bias_add(conv, b)
         conv_out = tf.nn.relu(conv_with_b)
         return conv_out
 
     def maxpool_layer(self, conv, k=2):
         return tf.nn.max_pool(conv, ksize=[1, k, k, 1], strides=[1, k, k, 1], padding='SAME')
+
+    def size_after(self, depth):
+        i = self.width
+        j = self.height
+        for _ in range(depth):
+            i = math.ceil(i / self.stride_size)
+            i = math.ceil(i / self.ksize)
+            j = math.ceil(j / self.stride_size)
+            j = math.ceil(j / self.ksize)
+        return i * j
 
     def model(self, x):
         n_cats = 2
@@ -61,7 +73,8 @@ class ImageClassifier:
         #          2 |    1, 1 |  16000 |   -    |      -      |     -         SUCCESS
 
         # Introduces a fully connected layer
-        dim = window_size * window_size * math.ceil(self.width / window_size) * math.ceil(self.height / window_size) * self.batch_size
+        dim = self.size_after(2) * 64 * self.batch_size
+        print('dim = {}'.format(dim))
         W3 = tf.Variable(tf.random_normal([dim, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
@@ -72,12 +85,23 @@ class ImageClassifier:
         x_reshaped = tf.reshape(x, shape=[-1, self.width, self.height, 1])
 
         conv_out1 = self.conv_layer(x_reshaped, W1, b1)
-        maxpool_out1 = self.maxpool_layer(conv_out1)
+        # 1,1 -> conv_out1 = [None, 99, 39, 64]
+        # 2,2 -> conv_out1 = [None, 50, 20, 64]
+        # 3,3 -> conv_out1 = [None, 33, 13, 64]
+        print('conv_out1 = {}'.format(conv_out1.get_shape().as_list()))
+
+        maxpool_out1 = self.maxpool_layer(conv_out1, self.ksize)
+        print('maxpool_out1 = {}'.format(maxpool_out1.get_shape().as_list()))
         norm1 = tf.nn.lrn(maxpool_out1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
 
         conv_out2 = self.conv_layer(norm1, W2, b2)
+        # 1,1 -> conv_out2 = [None, 50, 20, 64]
+        # 2,2 -> conv_out2 = [None, 13, 5, 64]
+        # 3,3 -> conv_out2 = [None, 6, 3, 64]
+        print('conv_out2 = {}'.format(conv_out2.get_shape().as_list()))
         norm2 = tf.nn.lrn(conv_out2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
-        maxpool_out2 = self.maxpool_layer(norm2)
+        maxpool_out2 = self.maxpool_layer(norm2, self.ksize)
+        print('maxpool_out2 = {}'.format(maxpool_out2.get_shape().as_list()))
 
         maxpool_reshaped = tf.reshape(maxpool_out2, [-1, W3.get_shape().as_list()[0]])
         local = tf.add(tf.matmul(maxpool_reshaped, W3), b3)
