@@ -41,10 +41,10 @@ if __name__ == '__main__':
     nOfEach = 3
     n_rows = 2
     fig, (ax1, ax2) = plt.subplots(n_rows, 1)
-    plt.title("Simulated network connections (machines vs ports)")
-    ax1.set_title('Port scanned', pad=-50.0)
+    plt.title("Simulated network connections (machines vs ports)", pad=-60.0)
+    ax1.set_title('Port scanned', pad=-60.0)
     do_axes(ax1)
-    ax2.set_title('Normal activity', pad=-50.0)
+    ax2.set_title('Normal activity', pad=-60.0)
     do_axes(ax2)
 
     positive_matrices = Sample.matrices_of(samples.training_data, 1)
@@ -54,3 +54,4 @@ if __name__ == '__main__':
     do_plot(fig, nOfEach, n_rows, negative_matrices[0:nOfEach])
 
     plt.show()
+    fig.savefig('/tmp/test.png')

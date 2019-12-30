@@ -44,37 +44,19 @@ class ImageClassifier:
             i = math.ceil(i / self.ksize)
             j = math.ceil(j / self.stride_size)
             j = math.ceil(j / self.ksize)
-        return i * j
+        return int(i * j)
 
     def model(self, x):
         n_cats = 2
         window_size = 5
 
-        # Applies 64 convolutions of window size 5 × 5
         W1 = tf.Variable(tf.random_normal([window_size, window_size, 1, 64]))
         b1 = tf.Variable(tf.random_normal([64]))
 
-        # Applies 64 more convolutions of window size 5 × 5
         W2 = tf.Variable(tf.random_normal([window_size, window_size, 64, 64]))
         b2 = tf.Variable(tf.random_normal([64]))
 
-        # batch_size | strides | W3     | actual | logits_size | labels_size
-        #          2 |    1, 1 | 6*6*64 | 32000  |      -      |     -
-        #          2 |    2, 2 | 6*6*64 |  2688  |      -      |     -
-        #          4 |    1, 1 | 6*6*64 | 64000  |      -      |     -
-        #          4 |    2, 2 |  16000 |  5376  |      -      |     -
-        #          4 |    3, 3 |  16000 |  1536  |      -      |     -
-        #          4 |    4, 4 |  16000 |   512  |      -      |     -
-        #          4 |    5, 5 |  16000 |   256  |      -      |     -
-        #          4 |    6, 6 |  16000 |   256  |      -      |     -
-        #          4 |    7, 7 |  16000 |   256  |      -      |     -
-        #          4 |    1, 1 |   1000 |   -    |     [64,2]  |   [4,2]
-        #          4 |    1, 1 |  16000 |   -    |      -      |     -         SUCCESS
-        #          2 |    1, 1 |  16000 |   -    |      -      |     -         SUCCESS
-
-        # Introduces a fully connected layer
         dim = self.size_after(2) * 64 * self.batch_size
-        print('dim = {}'.format(dim))
         W3 = tf.Variable(tf.random_normal([dim, 1024]))
         b3 = tf.Variable(tf.random_normal([1024]))
 
@@ -85,34 +67,23 @@ class ImageClassifier:
         x_reshaped = tf.reshape(x, shape=[-1, self.width, self.height, 1])
 
         conv_out1 = self.conv_layer(x_reshaped, W1, b1)
-        # 1,1 -> conv_out1 = [None, 99, 39, 64]
-        # 2,2 -> conv_out1 = [None, 50, 20, 64]
-        # 3,3 -> conv_out1 = [None, 33, 13, 64]
-        print('conv_out1 = {}'.format(conv_out1.get_shape().as_list()))
 
         maxpool_out1 = self.maxpool_layer(conv_out1, self.ksize)
-        print('maxpool_out1 = {}'.format(maxpool_out1.get_shape().as_list()))
         norm1 = tf.nn.lrn(maxpool_out1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
 
         conv_out2 = self.conv_layer(norm1, W2, b2)
-        # 1,1 -> conv_out2 = [None, 50, 20, 64]
-        # 2,2 -> conv_out2 = [None, 13, 5, 64]
-        # 3,3 -> conv_out2 = [None, 6, 3, 64]
-        print('conv_out2 = {}'.format(conv_out2.get_shape().as_list()))
         norm2 = tf.nn.lrn(conv_out2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75)
         maxpool_out2 = self.maxpool_layer(norm2, self.ksize)
-        print('maxpool_out2 = {}'.format(maxpool_out2.get_shape().as_list()))
 
         maxpool_reshaped = tf.reshape(maxpool_out2, [-1, W3.get_shape().as_list()[0]])
         local = tf.add(tf.matmul(maxpool_reshaped, W3), b3)
         local_out = tf.nn.relu(local)
         out = tf.add(tf.matmul(local_out, W_out), b_out)
 
-        print('out = {}'.format(np.shape(out)))
-
         return out
 
-    def one_hot_encode(self, b_2_r, n_cats):
+    @staticmethod
+    def one_hot_encode(b_2_r, n_cats):
         xs = map(lambda b2r: b2r[1], b_2_r)
         labels = np.asarray(list(xs))
         return tf.one_hot(labels, n_cats, on_value=1., off_value=0., axis=-1)
@@ -125,7 +96,8 @@ class ImageClassifier:
         xs_reshaped = map(lambda x: np.reshape(x, self.width * self.height), xs)
         return np.asarray(list(xs_reshaped))
 
-    def matrix_2d_to_1d(self, m):
+    @staticmethod
+    def matrix_2d_to_1d(m):
         shape = np.shape(m)
         return np.reshape(m, shape[0] * shape[1])
 
@@ -183,13 +155,7 @@ if __name__ == "__main__":
 
     samples = Sample(39, 99, 100)
 
-    classifier = ImageClassifier(samples.training_data, samples.test_data)
+    classifier = ImageClassifier(samples.training_data, samples.test_data, stride=3, ksize=3)
     classifier.train(11)
     classifier.test()
 
-    # with tf.compat.v1.Session() as sess:
-    #     _, c, p = sess.run([optimizer, cost, pred], feed_dict={x: X_new ,
-    #                                                            y: Y_new})
-    #     correct_prediction = tf.equal(tf.argmax(pred), tf.argmax(Y))
-    #     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-    #     print ("Accuracy:", accuracy.eval({X: X_test, Y: Y_test}))
