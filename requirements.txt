@@ -4,5 +4,5 @@ jupyter
 matplotlib
 Pillow
 scikit-learn
-tensorflow==1.15.0
+tensorflow==1.15.2
 pytest
