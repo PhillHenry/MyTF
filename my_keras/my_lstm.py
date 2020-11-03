@@ -31,6 +31,7 @@ def lstm_model(n_in):
     model.fit(cycles, cycles, epochs=300, verbose=0)
     return model
 
+
 # define input sequence
 n_in = 50
 n_samples = 10
