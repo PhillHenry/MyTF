@@ -19,30 +19,34 @@ def reshape(xs):
     return xs.reshape((1, (len(xs)), 1))
 
 
+def lstm_model(n_in):
+    # define model
+    model = Sequential()
+    model.add(LSTM(100, activation='relu', input_shape=(n_in, 1)))
+    model.add(RepeatVector(n_in))
+    model.add(LSTM(100, activation='relu', return_sequences=True))
+    model.add(TimeDistributed(Dense(1)))
+    model.compile(optimizer='adam', loss='mse')
+    # fit model
+    model.fit(cycles, cycles, epochs=300, verbose=0)
+    return model
+
 # define input sequence
 n_in = 50
 n_samples = 10
 
-cycles_x3 = raw_data(3, n_in)
+cycles = raw_data(3, n_in)
 for i in range (n_samples - 1):
     data = raw_data((i / n_samples) + 1, n_in)
-    cycles_x3 = np.concatenate((cycles_x3, data), axis=None)
+    cycles = np.concatenate((cycles, data), axis=None)
 
 # reshape input into [samples, timesteps, features]
-cycles_x3 = cycles_x3.reshape(n_samples, n_in, 1)
+cycles = cycles.reshape(n_samples, n_in, 1)
 
 cycles_x1 = raw_data(1, n_in)
 cycles_x1 = reshape(cycles_x1)
 
-# define model
-model = Sequential()
-model.add(LSTM(100, activation='relu', input_shape=(n_in, 1)))
-model.add(RepeatVector(n_in))
-model.add(LSTM(100, activation='relu', return_sequences=True))
-model.add(TimeDistributed(Dense(1)))
-model.compile(optimizer='adam', loss='mse')
-# fit model
-model.fit(cycles_x3, cycles_x3, epochs=300, verbose=0)
+model = lstm_model(n_in)
 plot_model(model, show_shapes=True, to_file='reconstruct_lstm_autoencoder.png')
 # demonstrate recreation
 yhat = model.predict(cycles_x1, verbose=0)
