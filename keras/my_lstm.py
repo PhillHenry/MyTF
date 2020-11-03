@@ -21,17 +21,15 @@ def reshape(xs):
 
 # define input sequence
 n_in = 50
-# reshape input into [samples, timesteps, features]
 n_samples = 10
 
 cycles_x3 = raw_data(3, n_in)
 for i in range (n_samples - 1):
-    data = raw_data((i + 1) / n_samples, n_in)
+    data = raw_data((i / n_samples) + 1, n_in)
     cycles_x3 = np.concatenate((cycles_x3, data), axis=None)
+
+# reshape input into [samples, timesteps, features]
 cycles_x3 = cycles_x3.reshape(n_samples, n_in, 1)
-
-
-#cycles_x3 = np.concatenate((raw_data(3, n_in), raw_data(2, n_in)), axis=None).reshape(n_samples, n_in, 1)
 
 cycles_x1 = raw_data(1, n_in)
 cycles_x1 = reshape(cycles_x1)
