@@ -9,6 +9,7 @@ from keras.layers import RepeatVector
 from keras.layers import TimeDistributed
 from keras.utils import plot_model
 import matplotlib.pyplot as plt
+import my_keras.input_manipulation as massage
 
 
 def raw_data(n_cycles, n_points):
@@ -44,16 +45,16 @@ for i in range (n_samples - 1):
 # reshape input into [samples, timesteps, features]
 cycles = cycles.reshape(n_samples, n_in, 1)
 
-cycles_x1 = raw_data(1, n_in)
-cycles_x1 = reshape(cycles_x1)
+cycles_x1 = massage.rotate(raw_data(1, n_in), int(n_in / 5))
+actual = reshape(np.copy(cycles_x1))
 
 model = lstm_model(n_in)
 plot_model(model, show_shapes=True, to_file='reconstruct_lstm_autoencoder.png')
 # demonstrate recreation
-yhat = model.predict(cycles_x1, verbose=0)
+yhat = model.predict(actual, verbose=0)
 predictions = yhat[0, :, 0]
 print(predictions)
 
-plt.plot(raw_data(1, n_in))
+plt.plot(cycles_x1)
 plt.plot(predictions)
 plt.show()

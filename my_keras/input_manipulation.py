@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def rotate(xs, n):
     length = len(xs)
     n = n % length
