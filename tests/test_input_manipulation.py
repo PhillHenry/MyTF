@@ -5,3 +5,8 @@ import numpy as np
 def test_rotate_array():
     xs = [1, 2, 3, 4, 5]
     assert np.array_equal(to_test.rotate(xs, 2), np.asarray([3, 4, 5, 1, 2]))
+
+
+def test_rotate_array_wrap():
+    xs = [1, 2, 3, 4, 5]
+    assert np.array_equal(to_test.rotate(xs, 7), np.asarray([3, 4, 5, 1, 2]))
